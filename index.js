@@ -17,6 +17,7 @@ var istanbul = require('istanbul');
 var through = require('through');
 var path = require('path');
 var esprima = require('esprima');
+var minimatch = require('minimatch');
 
 
 var instrumenter = new istanbul.Instrumenter();
@@ -24,7 +25,7 @@ function instrument(file, data) {
      return instrumenter.instrumentSync(data, file);
 }
 
-module.exports = function istanbulify(file) {
+module.exports = function istanbulify(file, options) {
     var data = '';
     return through(write, end);
 
@@ -34,18 +35,37 @@ module.exports = function istanbulify(file) {
     function end () {
         var src;
         try {
-            var syntax = esprima.parse(data, {comment: true});
-            src = 
-                (syntax.comments && syntax.comments.some(function (comment) {
-                    return comment.type === 'Block' && /^\s*istanbulify +ignore +file\s*$/.test(comment.value);
-                })) ?
-                    data:
-                    instrument(file, data)
-                ;
+            src = (shouldIgnoreThisFile()) ? data : instrument(file, data);
         } catch (error) {
             this.emit('error', error);
         }
         this.queue(src);
         this.queue(null);
+    }
+    function shouldIgnoreThisFile() {
+        return includesIgnoreComment() || isExcluded();
+    }
+    function includesIgnoreComment() {
+        var syntax = esprima.parse(data, {comment: true});
+        return syntax.comments && syntax.comments.some(function (comment) {
+            return comment.type === 'Block' && /^\s*istanbulify +ignore +file\s*$/.test(comment.value);
+        })
+    }
+
+    function isExcluded() {
+        return getExcludeGlobs().some(function (glob) {
+            return minimatch(path.relative(process.cwd(), file), glob);
+        });
+    }
+
+    function getExcludeGlobs() {
+        var value = options.exclude;
+
+        if (!value) {
+            return [];
+        }
+        else {
+            return (Array.isArray(value)) ? value : [ value ];
+        }
     }
 };

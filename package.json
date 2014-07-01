@@ -25,7 +25,8 @@
   "dependencies": {
     "istanbul": "~0.2.4",
     "esprima": "~1.0.4",
-    "through": "~2.3.4"
+    "through": "~2.3.4",
+    "minimatch": "~0.3"
   },
   "devDependencies": {
     "browserify": "~3.28.1",

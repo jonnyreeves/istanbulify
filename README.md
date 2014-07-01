@@ -21,7 +21,12 @@ browserify -t istanbulify myfile.js > bundle.js
 Ignoring files :
 ============
 
-To ignore a file during bundling add a block comments containing `/* istanbulify ignore file */ ` in your file.
+To ignore a file during bundling either add a block comments containing `/* istanbulify ignore file */ ` in your file
+or pass one or more patterns as a transform argument:
+
+```
+browserify -t [ istanbullify -exclude test/**/*.js ] myfile.js > bundle.js
+```
 
 
 Credits:
